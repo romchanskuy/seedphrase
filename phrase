@@ -1,0 +1,98 @@
+from bip39 import mnemonic
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from web3 import Web3
+import time
+
+def generate_seed_phrase():
+    # Генерация случайной мнемонической фразы из 12 слов
+    seed_phrase = mnemonic.generate()
+    return seed_phrase
+
+def check_balance(address):
+    # Подключение к сети BSC
+    w3 = Web3(Web3.HTTPProvider('https://bsc-dataseed.binance.org/'))
+
+    # Получение баланса BNB для указанного адреса
+    balance = w3.eth.get_balance(address) / 10 ** 18
+    return balance
+
+def enter_seed_phrase_in_metamask(seed_phrase):
+    # Инициализация драйвера Selenium (установите путь к драйверу подходящего браузера)
+    driver = webdriver.Chrome('/путь_к_драйверу/chromedriver')
+
+    # Открытие страницы метамаски
+    driver.get('https://metamask.io/')
+
+    # Ожидание загрузки страницы
+    time.sleep(3)
+
+    # Клик по кнопке "Get Chrome Extension"
+    get_extension_button = driver.find_element_by_xpath('//a[@href="/download"]')
+    get_extension_button.click()
+
+    # Ожидание загрузки расширения
+    time.sleep(3)
+
+    # Клик по кнопке "Install MetaMask for Chrome"
+    install_button = driver.find_element_by_xpath('//button[@class="button btn-primary"]')
+    install_button.click()
+
+    # Ожидание установки расширения
+    time.sleep(5)
+
+    # Открытие вкладки с MetaMask
+    driver.switch_to.window(driver.window_handles[1])
+
+    # Клик по кнопке "Import wallet"
+    import_wallet_button = driver.find_element_by_xpath('//button[@class="first-time-flow__button"]')
+    import_wallet_button.click()
+
+    # Ввод сид-фразы в поле
+    seed_phrase_input = driver.find_element_by_xpath('//textarea[@class="textarea"]')
+    seed_phrase_input.send_keys(seed_phrase)
+
+    # Клик по кнопке "I have read and agree"
+    agree_checkbox = driver.find_element_by_xpath('//div[@class="first-time-flow__checkbox"]')
+    agree_checkbox.click()
+
+    # Клик по кнопке "Import"
+    import_button = driver.find_element_by_xpath('//button[@class="first-time-flow__button"]')
+    import_button.click()
+
+    # Закрытие драйвера
+    time.sleep(3)
+    driver.quit()
+
+# Главная функция
+def main():
+    while True:
+        # Генерация случайной сид-фразы
+        seed_phrase = generate_seed_phrase()
+
+        # Вывод сид-фразы
+        print("Сид-фраза:", seed_phrase)
+
+        # Ввод сид-фразы в MetaMask
+        enter_seed_phrase_in_metamask(seed_phrase)
+
+        # Ожидание входа в аккаунт MetaMask
+        time.sleep(10)
+
+        # Получение адреса аккаунта из MetaMask
+        account_address = "ваш_адрес_аккаунта_здесь"
+
+        # Проверка баланса BNB
+        balance = check_balance(account_address)
+
+        if balance > 0:
+            print("Баланс BNB:", balance)
+            break
+        else:
+            print("Баланс BNB равен 0, переходим к следующей сид-фразе.")
+
+        # Задержка перед следующей попыткой
+        time.sleep(5)
+
+# Вызов главной функции
+main()
